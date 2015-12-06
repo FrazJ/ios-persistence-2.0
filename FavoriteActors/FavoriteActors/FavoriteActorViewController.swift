@@ -25,6 +25,8 @@ class FavoriteActorViewController : UITableViewController, ActorPickerViewContro
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
         
+        actors = fetchAllActors()
+        
         tableView.reloadData()
     }
     
@@ -73,7 +75,6 @@ class FavoriteActorViewController : UITableViewController, ActorPickerViewContro
         
         
         if let newActor = actor {
-            
             // Debugging output
             print("picked actor with name: \(newActor.name),  id: \(newActor.id), profilePath: \(newActor.imagePath)")
 
@@ -82,7 +83,32 @@ class FavoriteActorViewController : UITableViewController, ActorPickerViewContro
                 if a.id == newActor.id {
                     return
                 }
-            }            
+            }
+            
+            //Create a dictionary from the actor.
+            var dictionary = [String:AnyObject]()
+            dictionary[Person.Keys.ID] = newActor.id
+            dictionary[Person.Keys.Name] = newActor.name
+            
+            if let imagePath = newActor.imagePath {
+                dictionary[Person.Keys.ProfilePath] = imagePath
+            }
+            
+            //Insert the actor on the main thread
+            dispatch_async(dispatch_get_main_queue()) {
+                //Initialise the Person, using the shared context
+                let actorToBeAdded = Person(dictionary: dictionary, context: self.sharedContext)
+                
+                //Append the actor to the array
+                self.actors.append(actorToBeAdded)
+                
+                //Save the changes
+                do {
+                    try self.sharedContext.save()
+                } catch let error as NSError  {
+                    print("Error saving context: \(error.localizedDescription)")
+                }
+            }
         }
     }
     
