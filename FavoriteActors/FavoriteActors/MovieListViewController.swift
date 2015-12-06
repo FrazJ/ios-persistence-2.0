@@ -125,6 +125,7 @@ class MovieListViewController : UITableViewController {
         return cell
     }
     
+    //Function that removes an actors movie
     override func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
         
         switch (editingStyle) {
