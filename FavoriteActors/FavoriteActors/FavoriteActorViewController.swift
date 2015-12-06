@@ -10,19 +10,34 @@ import UIKit
 
 class FavoriteActorViewController : UITableViewController, ActorPickerViewControllerDelegate {
     
+    // MARK: - Properties
     var actors = [Person]()
+    var actorsFilePath : String {
+        let manger = NSFileManager.defaultManager()
+        let url = manger.URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask).first!
+        return url.URLByAppendingPathComponent("actorsArray").path!
+    }
     
     // MARK: - Life Cycle
-    
     override func viewDidLoad() {
         super.viewDidLoad()
-
         self.navigationItem.leftBarButtonItem = self.editButtonItem()
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.Add, target: self, action: "addActor")
+        
+        //Checks to see if the files exists and if it does unarchives the objects
+        if NSFileManager.defaultManager().fileExistsAtPath(actorsFilePath) {
+            actors = NSKeyedUnarchiver.unarchiveObjectWithFile(actorsFilePath) as! [Person]
+        }
+        
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(true)
+        NSKeyedArchiver.archiveRootObject(self.actors, toFile: actorsFilePath)
+        print("The FavoriteActorViewController will appear")
     }
     
     // Mark: - Actions
-    
     func addActor() {
         let controller = self.storyboard!.instantiateViewControllerWithIdentifier("ActorPickerViewController") as! ActorPickerViewController
         
@@ -32,11 +47,9 @@ class FavoriteActorViewController : UITableViewController, ActorPickerViewContro
     }
     
     // MARK: - Actor Picker Delegate
-    
     func actorPicker(actorPicker: ActorPickerViewController, didPickActor actor: Person?) {
 
         if let newActor = actor {
-            
             // Check to see if we already have this actor
             for a in actors {
                 if a.id == newActor.id {
@@ -49,11 +62,12 @@ class FavoriteActorViewController : UITableViewController, ActorPickerViewContro
 
             // And reload the table
             self.tableView.reloadData()
+            
+            print("The actorPicker code has just run")
         }
     }
     
     // MARK: - Table View
-    
     override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return actors.count
     }
@@ -75,7 +89,6 @@ class FavoriteActorViewController : UITableViewController, ActorPickerViewContro
         }
         
         // If the above cases don't work, then we should download the image
-        
         else {
             
             // Set the placeholder
@@ -116,14 +129,6 @@ class FavoriteActorViewController : UITableViewController, ActorPickerViewContro
         default:
             break
         }
-    }
-    
-    // MARK: - Saving the array
-    
-    var actorsFilePath : String {
-        let manager = NSFileManager.defaultManager()
-        let url = manager.URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask).first!
-        return url.URLByAppendingPathComponent("actorsArray").path!
     }
 }
 
