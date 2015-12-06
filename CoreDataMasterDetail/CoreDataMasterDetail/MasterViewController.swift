@@ -22,8 +22,9 @@ import CoreData
 
 class MasterViewController: UITableViewController, NSFetchedResultsControllerDelegate {
 
+    //MARK: Properties
     var events = [Event]()
-
+    
     override func awakeFromNib() {
         super.awakeFromNib()
     }
@@ -35,17 +36,27 @@ class MasterViewController: UITableViewController, NSFetchedResultsControllerDel
         let addButton = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: "insertNewObject:")
         self.navigationItem.rightBarButtonItem = addButton
 
-        // Step 3: initialize the events array with the results of the fetchAllEvents() method
-        // (see the initialization of the "actors" array in FavoreActorViewController for an example
+        events = fetchAllEvents()
     }
 
     func insertNewObject(sender: AnyObject) {
 
-        // Step 4: Create an Event object (and append it to the events array.)
-        // (see the actorPicker(:didPickActor:) method for an example with the Person object
+        let newEvent = Event(context: sharedContext)
 
         // Step 5: Save the context (and check for an error)
         // (see the actorPicker(:didPickActor:) method for an example
+        
+        dispatch_async(dispatch_get_main_queue()) {
+            self.events.append(newEvent)
+            
+            do {
+                try self.sharedContext.save()
+            } catch let error as NSError {
+                print("Error saving contect: \(error.localizedDescription)")
+            }
+            return
+        }
+        
         
         tableView.reloadData()
     }
@@ -91,11 +102,20 @@ class MasterViewController: UITableViewController, NSFetchedResultsControllerDel
     }
 
     // MARK: - Core Data Fetch Helpers
-
-    // Step 1: Add a "sharedContext" convenience property.
-    // (See the FavoriteActorViewController for an example)
-
-    // Step 2: Add a fetchAllEvents() method
-    // (See the fetchAllActors() method in FavoriteActorViewController for an example
+    
+    var sharedContext : NSManagedObjectContext {
+        let delegate = UIApplication.sharedApplication().delegate as! AppDelegate
+        return delegate.managedObjectContext
+    }
+    
+    func fetchAllEvents() -> [Event] {
+        let fetchRequest = NSFetchRequest(entityName: "Event")
+        
+        do {
+            return try sharedContext.executeFetchRequest(fetchRequest) as! [Event]
+        } catch {
+            return [Event]()
+        }
+    }
 }
 
