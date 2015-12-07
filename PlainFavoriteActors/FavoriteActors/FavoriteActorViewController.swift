@@ -12,6 +12,10 @@ import CoreData
 class FavoriteActorViewController : UITableViewController, ActorPickerViewControllerDelegate {
     
     var actors = [Person]()
+    var sharedContext : NSManagedObjectContext {
+        return CoreDataStackManager.sharedInstance().managedObjectContext
+    }
+
     
     // MARK: - Life Cycle
     
@@ -20,6 +24,8 @@ class FavoriteActorViewController : UITableViewController, ActorPickerViewContro
         
         self.navigationItem.leftBarButtonItem = self.editButtonItem()
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.Add, target: self, action: "addActor")
+        
+        var elContexto = sharedContext
     }
     
     override func viewWillAppear(animated: Bool) {
