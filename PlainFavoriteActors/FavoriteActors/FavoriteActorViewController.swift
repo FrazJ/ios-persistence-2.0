@@ -12,10 +12,10 @@ import CoreData
 class FavoriteActorViewController : UITableViewController, ActorPickerViewControllerDelegate {
     
     var actors = [Person]()
-    var sharedContext : NSManagedObjectContext {
-        return CoreDataStackManager.sharedInstance().managedObjectContext
-    }
 
+    lazy var sharedContext = {
+        CoreDataStackManager.sharedInstance().managedObjectContext
+    }()
     
     // MARK: - Life Cycle
     
@@ -24,8 +24,7 @@ class FavoriteActorViewController : UITableViewController, ActorPickerViewContro
         
         self.navigationItem.leftBarButtonItem = self.editButtonItem()
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.Add, target: self, action: "addActor")
-        
-        var elContexto = sharedContext
+        fetchAllActors()
     }
     
     override func viewWillAppear(animated: Bool) {
@@ -35,6 +34,16 @@ class FavoriteActorViewController : UITableViewController, ActorPickerViewContro
     }
     
     // Mark: - Actions
+    
+    func fetchAllActors() -> [Person] {
+        let fetchRequest = NSFetchRequest(entityName: "Person")
+        do {
+            return try sharedContext.executeFetchRequest(fetchRequest) as! [Person]
+        } catch let error as NSError {
+            print("Error in fetchAllActors(): \(error)")
+            return [Person]()
+        }
+    }
     
     func addActor() {
         let controller = self.storyboard!.instantiateViewControllerWithIdentifier("ActorPickerViewController") as! ActorPickerViewController
@@ -61,11 +70,24 @@ class FavoriteActorViewController : UITableViewController, ActorPickerViewContro
                 }
             }
             
-            // Here we add the actor object that comes from the ActorPickerViewController. Remember
-            // that we cannot do this directly once we incoporate Core Data. The ActorPickerViewController
-            // uses a "scratch" context. It fills its table with actors that have not been picked. We 
-            // need to create a new person object that is inserted into the shared context. 
-            self.actors.append(newActor)
+            
+            // The actor that was picked is from a different managed object context.
+            // We need to make a new actor. The easiest way to do that is to make a dictionary.
+            //
+            // (Side Note: Notice how the ?? is used to replace a nil profile path with an empty string.)
+            
+            let dictionary: [String : AnyObject] = [
+                Person.Keys.ID : newActor.id,
+                Person.Keys.Name : newActor.name,
+                Person.Keys.ProfilePath : newActor.imagePath ?? ""
+            ]
+            
+            // Now we create a new Person, using the shared Context
+            let actorToBeAdded = Person(dictionary: dictionary, context: sharedContext)
+
+            
+            self.actors.append(actorToBeAdded)
+            CoreDataStackManager.sharedInstance().saveContext()
         }
     }
     
