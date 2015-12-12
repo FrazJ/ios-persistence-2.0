@@ -12,6 +12,9 @@ import CoreData
 class MovieListViewController : UITableViewController {
     
     var actor: Person!
+    lazy var sharedContext = {
+       CoreDataStackManager.sharedInstance().managedObjectContext
+    }()
     
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
@@ -40,7 +43,7 @@ class MovieListViewController : UITableViewController {
                         
                         // Parse the array of movies dictionaries
                         var movies = moviesDictionaries.map() { (dictionary: [String : AnyObject]) -> Movie in
-                            let movie = Movie(dictionary: dictionary)
+                            let movie = Movie(dictionary: dictionary, context: self.sharedContext)
                             
                             // We associate this movie with it's actor by appending it to the array
                             // In core data we use the relationship. We set the movie's actor property

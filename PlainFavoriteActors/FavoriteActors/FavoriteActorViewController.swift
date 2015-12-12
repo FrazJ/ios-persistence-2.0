@@ -12,6 +12,9 @@ import CoreData
 class FavoriteActorViewController : UITableViewController, ActorPickerViewControllerDelegate {
     
     var actors = [Person]()
+    lazy var sharedContext = {
+        CoreDataStackManager.sharedInstance().managedObjectContext
+    }()
     
     // MARK: - Life Cycle
     
@@ -20,6 +23,8 @@ class FavoriteActorViewController : UITableViewController, ActorPickerViewContro
         
         self.navigationItem.leftBarButtonItem = self.editButtonItem()
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.Add, target: self, action: "addActor")
+        
+        actors = fetchAllActors()
     }
     
     override func viewWillAppear(animated: Bool) {
@@ -59,7 +64,26 @@ class FavoriteActorViewController : UITableViewController, ActorPickerViewContro
             // that we cannot do this directly once we incoporate Core Data. The ActorPickerViewController
             // uses a "scratch" context. It fills its table with actors that have not been picked. We 
             // need to create a new person object that is inserted into the shared context. 
-            self.actors.append(newActor)
+            
+            var dictionary = [String:AnyObject]()
+            dictionary[Person.Keys.ID] = newActor.id
+            dictionary[Person.Keys.Name] = newActor.name
+            dictionary[Person.Keys.ProfilePath] = newActor.imagePath
+            
+            let actorToBeAdded = Person(dictionary: dictionary, context: sharedContext)
+            
+            self.actors.append(actorToBeAdded)
+            CoreDataStackManager.sharedInstance().saveContext()
+        }
+    }
+    
+    func fetchAllActors() -> [Person] {
+        let fetchRequest = NSFetchRequest(entityName: "Person")
+        do {
+            return try sharedContext.executeFetchRequest(fetchRequest) as! [Person]
+        } catch let error as NSError {
+            print("Error in fetchAllActors(): \(error)")
+            return [Person]()
         }
     }
     

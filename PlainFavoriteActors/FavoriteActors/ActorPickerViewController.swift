@@ -23,6 +23,16 @@ class ActorPickerViewController: UIViewController, UITableViewDelegate, UITableV
     // The data for the table
     var actors = [Person]()
     
+    lazy var sharedContext = {
+        CoreDataStackManager.sharedInstance().managedObjectContext
+    }()
+    
+    lazy var scratchContext : NSManagedObjectContext = {
+        var context = NSManagedObjectContext()
+        context.persistentStoreCoordinator = CoreDataStackManager.sharedInstance().persistentStoreCoordinator
+        return context
+    }()
+    
     // The delegate will typically be a view controller, waiting for the Actor Picker
     // to return an actor
     var delegate: ActorPickerViewControllerDelegate?
@@ -89,7 +99,7 @@ class ActorPickerViewController: UIViewController, UITableViewDelegate, UITableV
                 // Create an array of Person instances from the JSON dictionaries
                 // If we change this so that it inserts into a context, which context should it be? 
                 self.actors = actorDictionaries.map() {
-                    Person(dictionary: $0)
+                    Person(dictionary: $0, context: self.scratchContext)
                 }
                 
                 // Reload the table on the main thread
